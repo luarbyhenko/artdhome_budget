@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<!--
+    Versión responsive de la pantalla original de creación de presupuesto.
+    Alcance de esta revisión:
+    - Mantener el diseño visual, contenido y estructura original lo más intactos posible
+    - Mejorar el comportamiento responsive en móvil, tablet y escritorio
+    - Añadir comportamiento para crear nuevas especialidades con el botón "Add Specialty"
+
+    Importante:
+    - No se añadió lógica de backend
+    - No se cambió el contenido existente
+    - Solo se ajustó la estructura visual del header de las especialidades
+      para que el nombre quede arriba y el subtotal + acciones queden debajo
+-->
+
+<html class="dark" lang="en">
+<head>
+    <!-- Metadatos básicos del documento -->
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+
+    <!-- Título de la pestaña del navegador -->
+    <title>Budget Creation - Art'Dhome ERP</title>
+
+    <!-- TailwindCSS por CDN -->
+    <script src="https://cdn.tailwindcss.com?plugins=container-queries"></script>
+
+    <!-- Fuente principal -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+
+    <!-- Iconos Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+
+    <!-- Hoja de estilos externa -->
+    <link rel="stylesheet" href="styles.css"/>
+
+    <!-- Configuración de Tailwind -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#14181f",
+                        "on-surface": "#f6f7f8",
+
+                        "tertiary-fixed": "#ffdcc3",
+                        "on-secondary-fixed": "#0c1b34",
+                        "tertiary": "#ffb77d",
+
+                        "primary-container": "#1a3a6b",
+                        "on-secondary": "#22304a",
+                        "on-secondary-container": "#a7b5d5",
+
+                        "outline": "#2c383a",
+                        "primary-fixed": "#d7e2ff",
+
+                        "on-secondary-fixed-variant": "#394762",
+                        "on-tertiary-fixed-variant": "#6e3900",
+                        "on-tertiary-fixed": "#2f1500",
+                        "on-tertiary": "#4d2600",
+                        "on-tertiary-container": "#ffba82",
+
+                        "tertiary-container": "#814400",
+                        "on-background": "#f1f5f9",
+                        "inverse-primary": "#abc7ff",
+
+                        "background": "#0a0d11",
+                        "on-error": "#690005",
+
+                        "surface-variant": "#14181f",
+                        "surface-bright": "#1c232d",
+                        "on-primary-container": "#d7e2ff",
+
+                        "primary": "#275396",
+                        "inverse-on-surface": "#0a0d11",
+
+                        "secondary-container": "#394762",
+                        "on-primary-fixed-variant": "#144588",
+                        "surface": "#0a0d11",
+
+                        "secondary-fixed-dim": "#b8c7e7",
+                        "on-surface-variant": "#94a3b8",
+
+                        "primary-fixed-dim": "#abc7ff",
+                        "secondary-fixed": "#d7e2ff",
+                        "surface-container-lowest": "#05070a",
+
+                        "on-primary-fixed": "#001b3f",
+                        "surface-dim": "#0a0d11",
+
+                        "secondary": "#b8c7e7",
+                        "on-error-container": "#ffdad6",
+
+                        "outline-variant": "#434750",
+                        "inverse-surface": "#f6f7f8",
+
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#275396",
+
+                        "surface-container-high": "#2c383a",
+                        "surface-container": "#1c232d",
+
+                        "error": "#ffb4ab",
+                        "surface-container-highest": "#33353a",
+
+                        "tertiary-fixed-dim": "#ffb77d",
+                        "error-container": "#93000a"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-background text-on-background min-h-screen">
+    <!-- =========================================================
+         BARRA SUPERIOR / HEADER
+    ========================================================== -->
+    <header class="fixed top-0 left-0 w-full bg-[#0a0d11]/80 backdrop-blur-md dark:bg-[#0a0d11]/80 z-50 border-b border-[#2c383a]/30 shadow-lg shadow-blue-900/10">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3">
+
+            <!-- BLOQUE IZQUIERDO -->
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 lg:gap-6 min-w-0">
+                <h1 id="budget-id-display" class="text-[#275396] font-black tracking-tight text-sm sm:text-base lg:text-lg uppercase break-words">
+                    Budget ID: Loading...
+                </h1>
+                <p id="budget-mode-badge" class="hidden text-on-surface-variant font-label text-[10px] font-bold uppercase tracking-widest mt-1">
+    Viewing Saved Budget
+</p>
+
+                <div class="hidden sm:block h-4 w-[1px] bg-outline-variant/30"></div>
+
+                <span id="current-date-display" class="text-on-surface-variant font-label text-xs sm:text-sm font-medium tracking-wide uppercase">
+                    Date: --
+                </span>
+            </div>
+
+            <!-- BLOQUE DERECHO -->
+           <div class="flex flex-col lg:flex-row gap-2 lg:gap-3 w-full lg:w-auto">
+
+    <!-- VIEW -->
+    <button id="view-budgets-btn"
+        class="w-full lg:w-auto bg-surface-container-low text-on-surface font-label font-bold uppercase tracking-widest text-[11px] px-4 sm:px-6 py-2.5 rounded-lg border border-outline hover:bg-surface-container transition-all active:scale-95">
+        View Budgets
+    </button>
+
+    <button
+    id="close-readonly-btn"
+    type="button"
+    class="hidden w-full lg:w-auto bg-surface-container-low text-on-surface font-label font-bold uppercase tracking-widest text-[11px] px-4 sm:px-6 py-2.5 rounded-lg border border-outline hover:bg-surface-container transition-all active:scale-95"
+>
+    <span class="material-symbols-outlined align-middle text-base mr-1">close</span>
+    Close
+</button>
+
+    <!-- SAVE + APPROVE -->
+    <div class="grid grid-cols-2 gap-2 w-full lg:flex lg:w-auto lg:gap-3">
+        <button id="save-budget-btn"
+            class="w-full lg:w-auto bg-surface-container-low text-on-surface font-label font-bold uppercase tracking-widest text-[11px] px-4 sm:px-6 py-2.5 rounded-lg border border-outline hover:bg-surface-container transition-all active:scale-95">
+            Save
+        </button>
+
+        <button
+            id="approve-budget-btn"
+            class="w-full lg:w-auto bg-primary text-on-primary font-label font-black uppercase tracking-widest text-[11px] px-4 sm:px-6 py-2.5 rounded-lg shadow-lg shadow-primary/20 hover:brightness-110 transition-all active:scale-95">
+            Approve
+        </button>
+
+        
+    </div>
+</div>
+        </div>
+    </div>
+</header>
+
+    <!-- =========================================================
+         LIENZO PRINCIPAL
+    ========================================================== -->
+    <main class="pt-56 sm:pt-44 md:pt-24 pb-12 px-4 sm:px-8 md:px-8 max-w-[1600px] mx-auto">
+    <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.55fr)_380px] gap-6 xl:gap-8 items-start">
+
+        <!-- COLUMNA IZQUIERDA -->
+        <div class="space-y-6 lg:space-y-8 min-w-0">
+
+            <!-- Architectural Data -->
+            <section class="bg-surface-container-low rounded-xl p-4 sm:p-6 lg:p-7 shadow-sm">
+                <header class="mb-6 lg:mb-8">
+                    <h2 class="text-on-surface font-black uppercase tracking-[0.1em] text-[11px] mb-1">
+                        Architectural Data
+                    </h2>
+                    <p class="text-on-surface-variant text-sm font-light uppercase tracking-wider">
+                        Project Information Details
+                    </p>
+                </header>
+
+                
+             <div class="space-y-4 md:space-y-6">
+    <!-- Fila 1: Client Name full width -->
+    <div class="space-y-2">
+        <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest ml-1">
+            Client Name
+        </label>
+        <div class="relative">
+            <select id="client-name-input" class="w-full bg-surface-container rounded-lg py-3 px-4 pr-10 text-sm text-on-surface appearance-none bg-no-repeat focus:outline-none focus:border-primary border border-outline transition-all font-medium">
+                <option>Inmobiliaria Los Pinos S.A.</option>
+                <option>Skyline Developments Corp</option>
+                <option>Urban Vision Partners</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
+                expand_more
+            </span>
+        </div>
+    </div>
+
+    <!-- Fila 2: Service + Project -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <div class="space-y-2">
+            <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest ml-1">
+                Service / Category
+            </label>
+            <input id="service-category-input" class="w-full bg-surface-container rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary border border-outline placeholder:text-outline-variant font-medium" placeholder="e.g. Interior Renovation" type="text"/>
+        </div>
+
+        <div class="space-y-2">
+            <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest ml-1">
+                Project Name
+            </label>
+            <input id="project-name-input" class="w-full bg-surface-container rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary border border-outline placeholder:text-outline-variant font-medium" placeholder="Industrial Complex Alpha" type="text"/>
+        </div>
+    </div>
+
+    <!-- Fila 3: Location + Total Area -->
+    <div class="grid grid-cols-2 gap-4 md:gap-6">
+        <div class="space-y-2">
+            <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest ml-1">
+                Location
+            </label>
+            <div class="relative">
+                <input
+                    id="location-input"
+                    class="w-full bg-surface-container rounded-lg py-3 px-4 pl-10 text-on-surface focus:outline-none focus:border-primary border border-outline placeholder:text-outline-variant font-medium"
+                    placeholder="Calle Mayor 42, Madrid"
+                    type="text"
+                />
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
+                    location_on
+                </span>
+            </div>
+        </div>
+
+        <div class="space-y-2">
+            <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest ml-1">
+                Total Area (SF)
+            </label>
+            <input
+                id="total-area-input"
+                class="w-full bg-surface-container rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary border border-outline placeholder:text-outline-variant font-medium"
+                placeholder="e.g. 4200"
+                type="number"
+                min="0"
+                step="0.01"
+            />
+        </div>
+    </div>
+</div>
+                    
+                
+            </section>
+
+            <!-- Execution Blocks -->
+            <section class="bg-surface-container-low rounded-xl p-4 sm:p-6 lg:p-7 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-6">
+                    <div>
+                        <h2 class="text-on-surface font-black uppercase tracking-[0.1em] text-[11px] mb-1">
+                            Execution Blocks
+                        </h2>
+                        <p class="text-on-surface-variant text-sm font-light uppercase tracking-wider">
+                            Detailed cost breakdown by specialty
+                        </p>
+                    </div>
+
+                    <button id="add-specialty-btn" class="group flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-[11px] hover:text-on-primary-container transition-colors w-fit" type="button">
+                        <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">add_circle</span>
+                        Add Specialty
+                    </button>
+                </div>
+
+                <div id="specialties-container" class="space-y-4">
+                    <!-- Las especialidades se agregan dinámicamente -->
+                </div>
+            </section>
+        </div>
+
+        <!-- COLUMNA DERECHA -->
+        <aside class="w-full xl:w-auto space-y-6 xl:sticky xl:top-24 self-start">
+            <div class="relative overflow-hidden bg-primary p-6 sm:p-8 rounded-xl shadow-xl shadow-primary/20">
+                <div class="absolute inset-0 bg-white/5 backdrop-blur-[1px]"></div>
+
+                <div class="absolute top-0 right-0 p-4 opacity-10">
+                    <span class="material-symbols-outlined text-8xl sm:text-9xl">payments</span>
+                </div>
+
+              <div class="relative z-10">
+    <h3 class="text-on-primary font-black uppercase tracking-[0.2em] text-[11px] mb-4 opacity-80">
+        Total Budget
+    </h3>
+
+    <div class="flex items-baseline gap-1 mb-6 flex-wrap">
+        <span class="text-on-primary/60 text-lg sm:text-xl font-light">$</span>
+        <span id="total-budget-amount" class="text-on-primary text-3xl sm:text-4xl font-black tracking-tighter break-all">
+            0.00
+        </span>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 border-t border-white/10 pt-5">
+        <div class="min-w-0">
+            <p class="text-on-primary/60 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1">
+                Cost / SF
+            </p>
+            <p id="cost-per-sf-display" class="text-on-primary text-sm sm:text-base font-bold tracking-tight">
+                --
+            </p>
+        </div>
+
+        <div class="min-w-0">
+            <p class="text-on-primary/60 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1">
+                Specialties
+            </p>
+            <p id="specialties-count-display" class="text-on-primary text-sm sm:text-base font-bold tracking-tight">
+                0
+            </p>
+        </div>
+    </div>
+</div>  
+            </div>
+
+            <div class="bg-surface-container-low rounded-xl p-5 sm:p-6 border border-outline/10">
+                <h3 class="text-on-surface font-black uppercase tracking-[0.1em] text-[11px] mb-6 border-b border-outline/20 pb-4">
+                    Specialty Breakdown
+                </h3>
+
+                <div id="breakdown-list" class="space-y-5"></div>
+
+               <div class="mt-4 pt-3 border-t border-outline/10">
+    <div class="flex items-center justify-between gap-4">
+        <label for="management-fee-input" class="text-on-surface-variant text-[9px] sm:text-[10px] font-bold uppercase tracking-widest">
+            Administration (%)
+        </label>
+
+        <input
+            id="management-fee-input"
+            class="management-fee-input w-20 sm:w-24 bg-surface-container rounded-lg py-2 px-3 text-sm text-right text-on-surface focus:outline-none focus:border-primary border border-outline font-medium"
+            type="number"
+            min="0"
+            step="0.01"
+            value="10"
+        />
+    </div>
+</div>
+            </div>
+
+            <div id="budget-validation-box" class="p-4 bg-surface-bright rounded-xl border border-primary/20 flex gap-4 items-start sm:items-center">
+                <div class="bg-primary/10 p-2 rounded-lg shrink-0">
+                    <span class="material-symbols-outlined text-primary">info</span>
+                </div>
+                <div>
+                    <p class="text-on-surface font-bold text-[10px] uppercase tracking-widest">
+                        Budget Validation
+                    </p>
+                    <p class="text-on-surface-variant text-[9px] leading-relaxed">
+                        Prices are locked for 30 days based on current material index.
+                    </p>
+                </div>
+            </div>
+        </aside>
+    </div>
+</main>
+
+    <!-- =========================================================
+         PLANTILLA DE NUEVA ESPECIALIDAD
+    ========================================================== -->
+    <template id="specialty-template">
+    <div class="specialty-card bg-surface-container-low rounded-xl overflow-hidden border border-outline/20">
+
+        <!-- Header -->
+        <div class="px-4 sm:px-6 py-4 bg-surface-bright/30 space-y-4">
+
+            <!-- Fila 1: título -->
+            <div class="flex items-center gap-3 min-w-0">
+                <span class="material-symbols-outlined text-on-surface-variant cursor-pointer shrink-0">expand_less</span>
+                <input
+                    class="bg-transparent border-none text-on-surface font-bold uppercase tracking-widest text-sm w-full focus:outline-none p-0 min-w-0"
+                    type="text"
+                    value="New Specialty"
+                />
+            </div>
+
+            <!-- Fila 2: subtotal + acciones -->
+            <div class="flex items-center justify-between gap-4">
+                <div class="text-left min-w-0">
+                    <span class="block text-[9px] font-black text-on-surface-variant uppercase tracking-widest">
+                        Current Subtotal
+                    </span>
+                    <span class="specialty-subtotal text-primary font-bold tracking-tight text-base">$0.00</span>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <button
+                        class="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+                        type="button"
+                        aria-label="Guardar especialidad"
+                    >
+                        <span class="material-symbols-outlined text-xl">save</span>
+                    </button>
+
+                    <button
+                        class="delete-specialty-btn p-2 hover:bg-error/10 text-error rounded-lg transition-colors"
+                        type="button"
+                        aria-label="Eliminar especialidad"
+                    >
+                        <span class="material-symbols-outlined text-xl">delete</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="specialty-body p-4 sm:p-6 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div class="space-y-2">
+                <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest">
+                    Labor (USD)
+                </label>
+                <input
+                    class="w-full bg-surface-container rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary border border-outline font-mono text-sm"
+                    type="number"
+                    value="0"
+                />
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest">
+                    Materials (USD)
+                </label>
+                <input
+                    class="w-full bg-surface-container rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary border border-outline font-mono text-sm"
+                    type="number"
+                    value="0"
+                />
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest">
+                    Equipment (USD)
+                </label>
+                <input
+                    class="w-full bg-surface-container rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary border border-outline font-mono text-sm"
+                    type="number"
+                    value="0"
+                />
+            </div>
+
+            <div class="space-y-2">
+                <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest">
+                    Others (USD)
+                </label>
+                <input
+                    class="w-full bg-surface-container rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary border border-outline font-mono text-sm"
+                    type="number"
+                    value="0"
+                />
+            </div>
+        </div>
+    </div>
+</template>
+
+    <!-- =========================================================
+     SAVED BUDGETS DRAWER
+========================================================== -->
+<div id="budgets-drawer-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-[60] hidden opacity-0 transition-opacity duration-300"></div>
+
+<aside id="budgets-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[440px] lg:w-[520px] bg-surface-container-low border-l border-outline/20 shadow-2xl z-[70] translate-x-full transition-transform duration-300 flex flex-col">
+    <!-- Header -->
+    <div class="px-5 sm:px-6 py-5 border-b border-outline/20 flex items-center justify-between gap-4">
+        <div>
+            <h2 class="text-on-surface font-black uppercase tracking-[0.12em] text-[11px] mb-1">
+                Saved Budgets
+            </h2>
+            <p class="text-on-surface-variant text-sm font-light uppercase tracking-wider">
+                Search and edit saved estimates
+            </p>
+        </div>
+
+        <button id="close-budgets-drawer-btn" type="button" class="p-2 rounded-lg hover:bg-white/5 transition-colors">
+            <span class="material-symbols-outlined text-on-surface-variant">close</span>
+        </button>
+    </div>
+
+    <!-- Search -->
+    <div class="p-5 sm:p-6 border-b border-outline/20">
+        <div class="relative">
+            <input
+                id="budgets-search-input"
+                type="text"
+                placeholder="Search by Budget ID, Project or Client"
+                class="w-full bg-surface-container rounded-lg py-3 px-4 pl-10 text-on-surface focus:outline-none focus:border-primary border border-outline placeholder:text-outline-variant font-medium"
+            />
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
+                search
+            </span>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="budgets-drawer-list" class="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+        <div class="rounded-xl border border-dashed border-outline/30 bg-surface-container p-5 text-center">
+            <p class="text-on-surface font-bold text-[10px] uppercase tracking-widest mb-2">
+                No budgets loaded yet
+            </p>
+            <p class="text-on-surface-variant text-xs leading-relaxed">
+                Saved budgets will appear here once we connect this panel to your database.
+            </p>
+        </div>
+    </div>
+</aside>
+
+    <!-- Script externo -->
+    <script src="script.js"></script>
+</body>
+</html>

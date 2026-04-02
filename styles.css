@@ -1,0 +1,49 @@
+body {
+    font-family: 'Manrope', sans-serif;
+}
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: none;
+}
+
+select::-ms-expand {
+    display: none;
+}
+
+
+/* Quitar flechas del input number */
+.management-fee-input::-webkit-outer-spin-button,
+.management-fee-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.management-fee-input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+
+
+/* ==============================
+   Read-only budget mode
+============================== */
+.budget-readonly-mode input[disabled],
+.budget-readonly-mode select[disabled] {
+    opacity: 0.95;
+    cursor: default;
+}
+
+.budget-readonly-mode input[disabled],
+.budget-readonly-mode select[disabled],
+.budget-readonly-mode .specialty-card input[readonly] {
+    box-shadow: none;
+    border-color: rgba(255, 255, 255, 0.06);
+}
