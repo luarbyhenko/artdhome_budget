@@ -1,7 +1,23 @@
 /**
  * =========================================================
  * ART'DHOME ERP - FRONTEND LOGIC
- * Conexión con Google Apps Script + manejo de especialidades
+ * ---------------------------------------------------------
+ * Frontend principal para:
+ * - Gestión visual de specialties y line items
+ * - Cálculo de subtotales y resumen global
+ * - Lectura / edición de budgets guardados
+ * - Integración con Google Apps Script
+ *
+ * Este archivo fue ajustado para trabajar con la estructura
+ * HTML actual del sistema:
+ * - specialty-total-display
+ * - specialty-amount-input
+ * - line-item-amount-input
+ * - line-items-container
+ *
+ * Reglas funcionales:
+ * - Una specialty puede trabajar en modo "direct amount"
+ *   o en modo "line items", pero no en ambos al mismo tiempo.
  * =========================================================
  */
 
@@ -22,11 +38,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const managementFeeInput = document.getElementById("management-fee-input");
     const totalAreaInput = document.getElementById("total-area-input");
     const budgetsDrawerList = document.getElementById("budgets-drawer-list");
-    const closeReadonlyButton = document.getElementById("close-readonly-btn"); 
+    const closeReadonlyButton = document.getElementById("close-readonly-btn");
 
     /**
      * =========================================================
-     * VALIDACIÓN BÁSICA DE ELEMENTOS DEL DOM
+     * VALIDACIÓN BÁSICA DEL DOM
      * =========================================================
      */
     if (!addButton || !container || !template) {
@@ -56,8 +72,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (closeReadonlyButton) {
-    closeReadonlyButton.addEventListener("click", cerrarModoLecturaYVolverAPresupuestos);
-}
+        closeReadonlyButton.addEventListener("click", cerrarModoLecturaYVolverAPresupuestos);
+    }
 
     if (managementFeeInput) {
         managementFeeInput.addEventListener("input", updateGlobalSummary);
@@ -67,6 +83,11 @@ document.addEventListener("DOMContentLoaded", function () {
         totalAreaInput.addEventListener("input", updateGlobalSummary);
     }
 
+    /**
+     * =========================================================
+     * DRAWER DE BUDGETS GUARDADOS
+     * =========================================================
+     */
     if (budgetsDrawerList) {
         budgetsDrawerList.addEventListener("click", function (event) {
             const viewButton = event.target.closest(".view-budget-btn");
@@ -100,123 +121,344 @@ document.addEventListener("DOMContentLoaded", function () {
      * =========================================================
      */
     addButton.addEventListener("click", function () {
-        if (isReadOnlyMode) return;
-
-        const clone = template.content.cloneNode(true);
-        container.appendChild(clone);
-
-        const newCard = container.lastElementChild;
-        if (!newCard) return;
-
-        const specialtyNameInput = newCard.querySelector('input[type="text"]');
-        if (specialtyNameInput) {
-            specialtyNameInput.focus();
-            specialtyNameInput.select();
-        }
-
-        calculateSpecialtySubtotal(newCard);
-    });
-
-    /**
-     * =========================================================
-     * EVENTO DELEGADO: CLICK EN ESPECIALIDADES
-     * =========================================================
-     */
-    container.addEventListener("click", function (event) {
-    const toggleButton = event.target.closest(".material-symbols-outlined");
-    if (
-        toggleButton &&
-        (toggleButton.textContent.trim() === "expand_less" ||
-         toggleButton.textContent.trim() === "expand_more")
-    ) {
-        const specialtyCard = toggleButton.closest(".specialty-card");
-        if (!specialtyCard) return;
-
-        const specialtyBody = specialtyCard.querySelector(".specialty-body");
-        const nameInput = specialtyCard.querySelector('input[type="text"]');
-
-        if (!specialtyBody) return;
-
-        const isHidden = specialtyBody.classList.contains("hidden");
-
-        if (isHidden) {
-            specialtyBody.classList.remove("hidden");
-            toggleButton.textContent = "expand_less";
-
-            if (nameInput && !isReadOnlyMode) {
-                nameInput.removeAttribute("readonly");
-            }
-        } else {
-            specialtyBody.classList.add("hidden");
-            toggleButton.textContent = "expand_more";
-
-            if (nameInput) {
-                nameInput.setAttribute("readonly", "true");
-            }
-        }
-
-        return;
-    }
-
     if (isReadOnlyMode) return;
 
-    const deleteButton = event.target.closest(".delete-specialty-btn");
-    if (deleteButton) {
-        const specialtyCard = deleteButton.closest(".specialty-card");
-        if (specialtyCard) {
-            specialtyCard.remove();
-            updateGlobalSummary();
-        }
-        return;
+    const clone = template.content.cloneNode(true);
+    container.prepend(clone);
+
+    const newCard = container.firstElementChild;
+    if (!newCard) return;
+
+    const specialtyNameInput = newCard.querySelector(".specialty-name-input");
+    if (specialtyNameInput) {
+        specialtyNameInput.focus();
+        specialtyNameInput.select();
     }
 
-    const saveSpecialtyButton = event.target.closest('[aria-label="Guardar especialidad"]');
-    if (saveSpecialtyButton) {
-        const specialtyCard = saveSpecialtyButton.closest(".specialty-card");
-        if (!specialtyCard) return;
-
-        const nameInput = specialtyCard.querySelector('input[type="text"]');
-        const specialtyBody = specialtyCard.querySelector(".specialty-body");
-        const toggleIcon = specialtyCard.querySelector(".material-symbols-outlined");
-
-        if (!nameInput || !specialtyBody) return;
-
-        const specialtyName = nameInput.value.trim();
-
-        if (specialtyName === "") {
-            alert("Please enter a specialty name.");
-            nameInput.focus();
-            return;
-        }
-
-        specialtyBody.classList.add("hidden");
-        nameInput.setAttribute("readonly", "true");
-
-        if (toggleIcon) {
-            toggleIcon.textContent = "expand_more";
-        }
-
-        return;
-    }
+    calculateSpecialtySubtotal(newCard);
+    updateAddLineButtonState(newCard);
 });
 
     /**
      * =========================================================
-     * EVENTO DELEGADO: INPUT EN ESPECIALIDADES
+     * EVENTO DELEGADO: CLICK EN SPECIALTIES / LINE ITEMS
+     * =========================================================
+     */
+    container.addEventListener("click", function (event) {
+        if (isReadOnlyMode) return;
+
+        /**
+         * ---------------------------------------------------------
+         * TOGGLE SPECIALTY
+         * ---------------------------------------------------------
+         */
+        const toggleButton = event.target.closest(".specialty-toggle-btn");
+        if (toggleButton) {
+            const specialtyCard = toggleButton.closest(".specialty-card");
+            if (!specialtyCard) return;
+
+            const specialtyBody = specialtyCard.querySelector(".specialty-body");
+            const nameInput = specialtyCard.querySelector(".specialty-name-input");
+            const icon = toggleButton.querySelector(".material-symbols-outlined");
+
+            if (!specialtyBody) return;
+
+            const isCollapsed = specialtyCard.classList.contains("is-collapsed");
+
+            if (isCollapsed) {
+                specialtyCard.classList.remove("is-collapsed");
+                specialtyBody.classList.remove("hidden");
+
+                if (icon) icon.textContent = "expand_less";
+
+                if (nameInput) {
+                    nameInput.removeAttribute("readonly");
+                }
+            } else {
+                specialtyBody.classList.add("hidden");
+                specialtyCard.classList.add("is-collapsed");
+
+                if (icon) icon.textContent = "expand_more";
+
+                if (nameInput) {
+                    nameInput.setAttribute("readonly", "true");
+                }
+            }
+
+            return;
+        }
+
+        /**
+         * ---------------------------------------------------------
+         * DELETE SPECIALTY
+         * ---------------------------------------------------------
+         */
+        const deleteButton = event.target.closest(".delete-specialty-btn");
+        if (deleteButton) {
+            const specialtyCard = deleteButton.closest(".specialty-card");
+            if (specialtyCard) {
+                specialtyCard.remove();
+                updateGlobalSummary();
+            }
+            return;
+        }
+
+        /**
+         * ---------------------------------------------------------
+         * SAVE SPECIALTY
+         * ---------------------------------------------------------
+         * Valida que:
+         * - tenga nombre
+         * - tenga amount directo o al menos una línea
+         */
+        const saveSpecialtyButton = event.target.closest(".save-specialty-btn");
+        if (saveSpecialtyButton) {
+            const specialtyCard = saveSpecialtyButton.closest(".specialty-card");
+            if (!specialtyCard) return;
+
+            const nameInput = specialtyCard.querySelector(".specialty-name-input");
+            const specialtyBody = specialtyCard.querySelector(".specialty-body");
+            const specialtyAmountInput = specialtyCard.querySelector(".specialty-amount-input");
+            const lineItemsContainer = specialtyCard.querySelector(".line-items-container");
+            const toggleButtonInCard = specialtyCard.querySelector(".specialty-toggle-btn");
+            const icon = toggleButtonInCard
+                ? toggleButtonInCard.querySelector(".material-symbols-outlined")
+                : null;
+
+            if (!nameInput || !specialtyBody) return;
+
+            const specialtyName = nameInput.value.trim();
+            const directAmount = Number(specialtyAmountInput?.value || 0);
+            const lineItemsCount = lineItemsContainer ? lineItemsContainer.children.length : 0;
+
+            if (!specialtyName) {
+                alert("Please enter a specialty name.");
+                nameInput.focus();
+                return;
+            }
+
+            if (directAmount <= 0 && lineItemsCount === 0) {
+                alert("Please enter a direct amount or add at least one line item.");
+                return;
+            }
+
+            specialtyBody.classList.add("hidden");
+            specialtyCard.classList.add("is-collapsed");
+            nameInput.setAttribute("readonly", "true");
+
+            if (icon) {
+                icon.textContent = "expand_more";
+            }
+
+            return;
+        }
+
+        /**
+         * ---------------------------------------------------------
+         * ADD LINE ITEM
+         * ---------------------------------------------------------
+         * Si existe monto directo, no se pueden agregar líneas.
+         * Si se agregan líneas, el amount directo se desactiva.
+         */
+        const addLineBtn = event.target.closest(".add-line-item-btn");
+        if (addLineBtn) {
+            const specialtyCard = addLineBtn.closest(".specialty-card");
+            if (!specialtyCard) return;
+
+            const amountInput = specialtyCard.querySelector(".specialty-amount-input");
+            const lineItemsContainer = specialtyCard.querySelector(".line-items-container");
+            const lineItemTemplate = document.getElementById("line-item-template");
+
+            if (!lineItemsContainer || !lineItemTemplate) return;
+
+            const amountValue = Number(amountInput?.value || 0);
+
+            // Si ya existe un monto directo, no permitimos agregar líneas
+            if (amountValue > 0) {
+                return;
+            }
+
+            // Al trabajar con líneas, el monto directo queda deshabilitado
+            if (amountInput) {
+                amountInput.value = "";
+                amountInput.disabled = true;
+                amountInput.classList.add("opacity-40", "pointer-events-none");
+            }
+
+            const clone = lineItemTemplate.content.cloneNode(true);
+lineItemsContainer.prepend(clone);
+
+const newLineItem = lineItemsContainer.firstElementChild;
+if (newLineItem) {
+    updateLineItemHeaderAmount?.(newLineItem);
+}
+
+calculateSpecialtySubtotal(specialtyCard);
+updateGlobalSummary();
+            return;
+        }
+
+        // TOGGLE LINE ITEM
+const lineItemToggleBtn = event.target.closest(".line-item-toggle-btn");
+
+if (lineItemToggleBtn) {
+    const lineItemRow = lineItemToggleBtn.closest(".line-item-row");
+    if (!lineItemRow) return;
+
+    const lineItemBody = lineItemRow.querySelector(".line-item-body");
+    const descriptionInput = lineItemRow.querySelector(".line-item-description-input");
+    const icon = lineItemToggleBtn.querySelector(".material-symbols-outlined");
+
+    if (!lineItemBody) return;
+
+    const isCollapsed = lineItemRow.classList.contains("is-collapsed");
+
+    if (isCollapsed) {
+        lineItemRow.classList.remove("is-collapsed");
+        lineItemBody.classList.remove("hidden");
+
+        if (icon) icon.textContent = "expand_less";
+
+        if (descriptionInput) {
+            descriptionInput.removeAttribute("readonly");
+        }
+    } else {
+        lineItemBody.classList.add("hidden");
+        lineItemRow.classList.add("is-collapsed");
+
+        if (icon) icon.textContent = "expand_more";
+
+        if (descriptionInput) {
+            descriptionInput.setAttribute("readonly", "true");
+        }
+    }
+
+    return;
+}
+
+
+        // SAVE LINE ITEM
+const saveLineBtn = event.target.closest(".save-line-item-btn");
+if (saveLineBtn) {
+    const lineItemRow = saveLineBtn.closest(".line-item-row");
+    if (!lineItemRow) return;
+
+    const lineItemBody = lineItemRow.querySelector(".line-item-body");
+    const descriptionInput = lineItemRow.querySelector(".line-item-description-input");
+    const toggleButton = lineItemRow.querySelector(".line-item-toggle-btn");
+    const icon = toggleButton ? toggleButton.querySelector(".material-symbols-outlined") : null;
+
+    if (!lineItemBody) return;
+
+    const description = descriptionInput?.value.trim() || "";
+const amountInput = lineItemRow.querySelector(".line-item-amount-input");
+const amountValue = Number(amountInput?.value || 0);
+
+if (!description) {
+    alert("Please enter a line item description.");
+    descriptionInput?.focus();
+    return;
+}
+
+if (amountValue <= 0) {
+    alert("Please enter an amount for this line item.");
+    amountInput?.focus();
+    return;
+}
+
+    lineItemBody.classList.add("hidden");
+    lineItemRow.classList.add("is-collapsed");
+
+    if (icon) {
+        icon.textContent = "expand_more";
+    }
+
+    if (descriptionInput) {
+        descriptionInput.setAttribute("readonly", "true");
+    }
+
+    return;
+}
+
+        /**
+         * ---------------------------------------------------------
+         * DELETE LINE ITEM
+         * ---------------------------------------------------------
+         * Si se eliminan todas las líneas, se reactiva el amount.
+         */
+        const deleteLineBtn = event.target.closest(".delete-line-item-btn");
+        if (deleteLineBtn) {
+            const lineRow = deleteLineBtn.closest(".line-item-row");
+            if (lineRow) {
+                const specialtyCard = lineRow.closest(".specialty-card");
+                const lineItemsContainer = specialtyCard?.querySelector(".line-items-container");
+                const amountInput = specialtyCard?.querySelector(".specialty-amount-input");
+
+                lineRow.remove();
+
+                if (lineItemsContainer && amountInput && lineItemsContainer.children.length === 0) {
+                    amountInput.disabled = false;
+                    amountInput.classList.remove("opacity-40", "pointer-events-none");
+                }
+
+                calculateSpecialtySubtotal(specialtyCard);
+                updateGlobalSummary();
+            }
+            return;
+        }
+    });
+
+    /**
+     * =========================================================
+     * EVENTO DELEGADO: INPUT EN SPECIALTIES / LINE ITEMS
      * =========================================================
      */
     container.addEventListener("input", function (event) {
         if (isReadOnlyMode) return;
 
-        if (event.target.matches('.specialty-body input[type="number"]')) {
-            const specialtyCard = event.target.closest(".specialty-card");
+        const specialtyCard = event.target.closest(".specialty-card");
+
+        /**
+         * ---------------------------------------------------------
+         * Si se edita el amount directo de specialty:
+         * - recalcula subtotal
+         * - deshabilita Add Line
+         * - limpia líneas existentes si hay valor > 0
+         * ---------------------------------------------------------
+         */
+        if (event.target.matches(".specialty-amount-input")) {
             if (specialtyCard) {
                 calculateSpecialtySubtotal(specialtyCard);
             }
             return;
         }
 
-        if (event.target.matches('.specialty-card input[type="text"]')) {
+        /**
+         * ---------------------------------------------------------
+         * Si se edita cualquier amount de línea:
+         * - recalcula subtotal
+         * ---------------------------------------------------------
+         */
+        if (event.target.matches(".line-item-amount-input")) {
+    const lineItemRow = event.target.closest(".line-item-row");
+
+    if (lineItemRow) {
+        updateLineItemHeaderAmount(lineItemRow);
+    }
+
+    if (specialtyCard) {
+        calculateSpecialtySubtotal(specialtyCard);
+    }
+    return;
+}
+
+        /**
+         * ---------------------------------------------------------
+         * Si se edita texto dentro de specialty o línea:
+         * - actualiza resumen global
+         * ---------------------------------------------------------
+         */
+        if (event.target.matches(".specialty-name-input, .line-item-description-input, .line-item-unit-input")) {
             updateGlobalSummary();
         }
     });
@@ -250,6 +492,11 @@ async function obtenerIdOficial() {
     }
 }
 
+/**
+ * =========================================================
+ * DRAWER
+ * =========================================================
+ */
 function openBudgetsDrawer() {
     const overlay = document.getElementById("budgets-drawer-overlay");
     const drawer = document.getElementById("budgets-drawer");
@@ -279,6 +526,11 @@ function closeBudgetsDrawer() {
     }, 300);
 }
 
+/**
+ * =========================================================
+ * CARGA DE BUDGETS GUARDADOS
+ * =========================================================
+ */
 async function fetchBudgetsList() {
     const listContainer = document.getElementById("budgets-drawer-list");
     if (!listContainer) return;
@@ -422,6 +674,11 @@ function renderBudgetsList(items) {
     });
 }
 
+/**
+ * =========================================================
+ * FECHA ACTUAL
+ * =========================================================
+ */
 function actualizarFechaActual() {
     const dateElement = document.getElementById("current-date-display");
     if (!dateElement) return;
@@ -434,16 +691,32 @@ function actualizarFechaActual() {
     dateElement.textContent = `Date: ${day}/${month}/${year}`;
 }
 
+/**
+ * =========================================================
+ * CALCULAR SUBTOTAL DE SPECIALTY
+ * ---------------------------------------------------------
+ * Reglas:
+ * - Si existe monto directo > 0, ese es el subtotal
+ * - Si no, suma solo los amounts de las líneas
+ * =========================================================
+ */
 function calculateSpecialtySubtotal(card) {
-    const inputs = card.querySelectorAll('.specialty-body input[type="number"]');
+    if (!card) return;
+
+    const specialtyAmountInput = card.querySelector(".specialty-amount-input");
+    const subtotalElement = card.querySelector(".specialty-total-display");
+    const lineAmountInputs = card.querySelectorAll(".line-item-amount-input");
+
     let total = 0;
+    const directAmount = Number(specialtyAmountInput?.value || 0);
 
-    inputs.forEach(input => {
-        const value = parseFloat(input.value) || 0;
-        total += value;
-    });
-
-    const subtotalElement = card.querySelector(".specialty-subtotal");
+    if (directAmount > 0) {
+        total = directAmount;
+    } else {
+        lineAmountInputs.forEach(input => {
+            total += Number(input.value || 0);
+        });
+    }
 
     if (subtotalElement) {
         subtotalElement.textContent = `$${total.toLocaleString(undefined, {
@@ -452,28 +725,42 @@ function calculateSpecialtySubtotal(card) {
         })}`;
     }
 
+    updateAddLineButtonState(card);
     updateGlobalSummary();
 }
 
+/**
+ * =========================================================
+ * INICIALIZAR SUBTOTALES
+ * =========================================================
+ */
 function inicializarSubtotales() {
     const cards = document.querySelectorAll(".specialty-card");
     cards.forEach(card => calculateSpecialtySubtotal(card));
 }
 
+/**
+ * =========================================================
+ * OBTENER SPECIALTIES PARA RESUMEN Y PAYLOAD
+ * ---------------------------------------------------------
+ * Se conserva la estructura esperada por backend:
+ * - labor/materials/equipment/others en 0
+ * - subtotal real de la specialty
+ * =========================================================
+ */
 function obtenerSpecialties() {
     const cards = document.querySelectorAll(".specialty-card");
 
     return Array.from(cards).map(card => {
-        const nameInput = card.querySelector('input[type="text"]');
-        const numberInputs = card.querySelectorAll('.specialty-body input[type="number"]');
-        const subtotalEl = card.querySelector(".specialty-subtotal");
+        const nameInput = card.querySelector(".specialty-name-input");
+        const subtotalEl = card.querySelector(".specialty-total-display");
 
         return {
             name: nameInput ? nameInput.value.trim() : "",
-            labor: Number(numberInputs[0]?.value || 0),
-            materials: Number(numberInputs[1]?.value || 0),
-            equipment: Number(numberInputs[2]?.value || 0),
-            others: Number(numberInputs[3]?.value || 0),
+            labor: 0,
+            materials: 0,
+            equipment: 0,
+            others: 0,
             subtotal: subtotalEl
                 ? Number(subtotalEl.textContent.replace(/[$,]/g, "")) || 0
                 : 0
@@ -481,6 +768,11 @@ function obtenerSpecialties() {
     });
 }
 
+/**
+ * =========================================================
+ * RESUMEN GLOBAL
+ * =========================================================
+ */
 function updateGlobalSummary() {
     const specialties = obtenerSpecialties();
 
@@ -565,6 +857,11 @@ function updateGlobalSummary() {
     });
 }
 
+/**
+ * =========================================================
+ * HELPERS
+ * =========================================================
+ */
 function escapeHtml(text) {
     return String(text)
         .replace(/&/g, "&amp;")
@@ -587,6 +884,11 @@ function formatBudgetDate(value) {
     });
 }
 
+/**
+ * =========================================================
+ * PAYLOAD PARA GUARDADO
+ * =========================================================
+ */
 function obtenerBudgetPayload() {
     const budgetIdText = document.getElementById("budget-id-display")?.textContent || "";
     const budgetId = budgetIdText.replace("Budget ID:", "").trim();
@@ -617,6 +919,11 @@ function obtenerBudgetPayload() {
     };
 }
 
+/**
+ * =========================================================
+ * GUARDAR / ACTUALIZAR BUDGET
+ * =========================================================
+ */
 async function guardarBudget() {
     if (isReadOnlyMode) return;
 
@@ -664,14 +971,10 @@ async function guardarBudget() {
             button.textContent = isEditing ? "Updated ✓" : "Saved ✓";
         }
 
-        // Si era creación nueva, sí limpiamos el formulario y generamos nuevo ID
         if (!isEditing) {
             resetFormulario();
             await obtenerIdOficial();
         }
-
-        // Si era edición, NO limpiamos el formulario.
-        // Dejamos currentEditingInternalId intacto para seguir editando.
 
         setTimeout(() => {
             if (button) {
@@ -693,6 +996,11 @@ async function guardarBudget() {
     }
 }
 
+/**
+ * =========================================================
+ * RESET FORMULARIO
+ * =========================================================
+ */
 function resetFormulario() {
     currentEditingInternalId = null;
 
@@ -707,7 +1015,6 @@ function resetFormulario() {
     const locationInput = document.getElementById("location-input");
     const totalAreaInput = document.getElementById("total-area-input");
     const managementFeeInput = document.getElementById("management-fee-input");
-    
 
     if (clientSelect) clientSelect.selectedIndex = 0;
     if (serviceInput) serviceInput.value = "";
@@ -729,24 +1036,42 @@ function resetFormulario() {
     const newCard = container.firstElementChild;
     if (!newCard) return;
 
-    const numberInputs = newCard.querySelectorAll('.specialty-body input[type="number"]');
-    numberInputs.forEach(input => input.value = 0);
+    const amountInput = newCard.querySelector(".specialty-amount-input");
+    const nameInput = newCard.querySelector(".specialty-name-input");
+    const body = newCard.querySelector(".specialty-body");
+    const toggleIcon = newCard.querySelector(".specialty-toggle-btn .material-symbols-outlined");
 
-    const nameInput = newCard.querySelector('input[type="text"]');
+    if (amountInput) {
+        amountInput.value = "";
+        amountInput.disabled = false;
+        amountInput.classList.remove("opacity-40", "pointer-events-none");
+    }
+
     if (nameInput) {
         nameInput.value = "New Specialty";
         nameInput.removeAttribute("readonly");
     }
 
-    const body = newCard.querySelector(".specialty-body");
     if (body) body.classList.remove("hidden");
 
-    const icon = newCard.querySelector(".material-symbols-outlined");
-    if (icon) icon.textContent = "expand_less";
+    if (toggleIcon) {
+        toggleIcon.textContent = "expand_less";
+    }
+
+    newCard.classList.remove("is-collapsed");
 
     calculateSpecialtySubtotal(newCard);
+    updateAddLineButtonState(newCard);
 }
 
+/**
+ * =========================================================
+ * CARGAR BUDGET EN FORMULARIO
+ * ---------------------------------------------------------
+ * El backend hoy persiste specialties con subtotal, no line items.
+ * Por eso se carga el subtotal como amount directo.
+ * =========================================================
+ */
 function cargarBudgetEnFormulario(budget) {
     const budgetIdDisplay = document.getElementById("budget-id-display");
     const clientSelect = document.getElementById("client-name-input");
@@ -785,6 +1110,7 @@ function cargarBudgetEnFormulario(budget) {
         const newCard = container.firstElementChild;
         if (newCard) {
             calculateSpecialtySubtotal(newCard);
+            updateAddLineButtonState(newCard);
         }
 
         updateGlobalSummary();
@@ -798,24 +1124,29 @@ function cargarBudgetEnFormulario(budget) {
         const card = container.lastElementChild;
         if (!card) return;
 
-        const nameInput = card.querySelector('input[type="text"]');
-        const numberInputs = card.querySelectorAll('.specialty-body input[type="number"]');
+        const nameInput = card.querySelector(".specialty-name-input");
+        const amountInput = card.querySelector(".specialty-amount-input");
 
         if (nameInput) {
             nameInput.value = spec.name || "New Specialty";
         }
 
-        if (numberInputs[0]) numberInputs[0].value = spec.labor || 0;
-        if (numberInputs[1]) numberInputs[1].value = spec.materials || 0;
-        if (numberInputs[2]) numberInputs[2].value = spec.equipment || 0;
-        if (numberInputs[3]) numberInputs[3].value = spec.others || 0;
+        if (amountInput) {
+            amountInput.value = Number(spec.subtotal || 0) || "";
+        }
 
         calculateSpecialtySubtotal(card);
+        updateAddLineButtonState(card);
     });
 
     updateGlobalSummary();
 }
 
+/**
+ * =========================================================
+ * MODOS DE LECTURA / EDICIÓN
+ * =========================================================
+ */
 function abrirBudgetEnModoLectura(internalId) {
     const budget = budgetsCache.find(item => String(item.internalId) === String(internalId));
     if (!budget) {
@@ -896,10 +1227,14 @@ function activarModoSoloLectura() {
     const specialtyCards = document.querySelectorAll(".specialty-card");
 
     specialtyCards.forEach(card => {
-        const nameInput = card.querySelector('input[type="text"]');
-        const numberInputs = card.querySelectorAll('.specialty-body input[type="number"]');
+        const nameInput = card.querySelector(".specialty-name-input");
+        const numberInputs = card.querySelectorAll('input[type="number"]');
         const deleteBtn = card.querySelector(".delete-specialty-btn");
-        const saveBtn = card.querySelector('[aria-label="Guardar especialidad"]');
+        const saveBtn = card.querySelector(".save-specialty-btn");
+        const addLineBtn = card.querySelector(".add-line-item-btn");
+        const lineDeleteBtns = card.querySelectorAll(".delete-line-item-btn");
+        const lineToggleBtns = card.querySelectorAll(".line-item-toggle-btn");
+        const specialtyToggleBtn = card.querySelector(".specialty-toggle-btn");
 
         if (nameInput) {
             nameInput.setAttribute("readonly", "true");
@@ -910,13 +1245,13 @@ function activarModoSoloLectura() {
             input.setAttribute("disabled", "true");
         });
 
-        if (deleteBtn) {
-            deleteBtn.classList.add("hidden");
-        }
+        if (deleteBtn) deleteBtn.classList.add("hidden");
+        if (saveBtn) saveBtn.classList.add("hidden");
+        if (addLineBtn) addLineBtn.classList.add("hidden");
+        if (specialtyToggleBtn) specialtyToggleBtn.classList.add("pointer-events-none");
 
-        if (saveBtn) {
-            saveBtn.classList.add("hidden");
-        }
+        lineDeleteBtns.forEach(btn => btn.classList.add("hidden"));
+        lineToggleBtns.forEach(btn => btn.classList.add("pointer-events-none"));
     });
 }
 
@@ -981,10 +1316,14 @@ function desactivarModoSoloLectura() {
     const specialtyCards = document.querySelectorAll(".specialty-card");
 
     specialtyCards.forEach(card => {
-        const nameInput = card.querySelector('input[type="text"]');
-        const numberInputs = card.querySelectorAll('.specialty-body input[type="number"]');
+        const nameInput = card.querySelector(".specialty-name-input");
+        const numberInputs = card.querySelectorAll('input[type="number"]');
         const deleteBtn = card.querySelector(".delete-specialty-btn");
-        const saveBtn = card.querySelector('[aria-label="Guardar especialidad"]');
+        const saveBtn = card.querySelector(".save-specialty-btn");
+        const addLineBtn = card.querySelector(".add-line-item-btn");
+        const lineDeleteBtns = card.querySelectorAll(".delete-line-item-btn");
+        const lineToggleBtns = card.querySelectorAll(".line-item-toggle-btn");
+        const specialtyToggleBtn = card.querySelector(".specialty-toggle-btn");
 
         if (nameInput) {
             nameInput.removeAttribute("readonly");
@@ -995,13 +1334,13 @@ function desactivarModoSoloLectura() {
             input.removeAttribute("disabled");
         });
 
-        if (deleteBtn) {
-            deleteBtn.classList.remove("hidden");
-        }
+        if (deleteBtn) deleteBtn.classList.remove("hidden");
+        if (saveBtn) saveBtn.classList.remove("hidden");
+        if (addLineBtn) addLineBtn.classList.remove("hidden");
+        if (specialtyToggleBtn) specialtyToggleBtn.classList.remove("pointer-events-none");
 
-        if (saveBtn) {
-            saveBtn.classList.remove("hidden");
-        }
+        lineDeleteBtns.forEach(btn => btn.classList.remove("hidden"));
+        lineToggleBtns.forEach(btn => btn.classList.remove("pointer-events-none"));
     });
 }
 
@@ -1012,7 +1351,7 @@ function abrirBudgetParaEdicion(internalId) {
         return;
     }
 
-    currentEditingInternalId = String(budget.internalId || '').trim();
+    currentEditingInternalId = String(budget.internalId || "").trim();
 
     cargarBudgetEnFormulario(budget);
     desactivarModoSoloLectura();
@@ -1029,8 +1368,6 @@ function abrirBudgetParaEdicion(internalId) {
     });
 }
 
-
-
 function cerrarModoLecturaYVolverAPresupuestos() {
     desactivarModoSoloLectura();
     resetFormulario();
@@ -1041,4 +1378,63 @@ function cerrarModoLecturaYVolverAPresupuestos() {
         top: 0,
         behavior: "smooth"
     });
+}
+
+/**
+ * =========================================================
+ * CONTROL DEL BOTÓN "ADD LINE"
+ * ---------------------------------------------------------
+ * Si hay monto directo:
+ * - deshabilita Add Line
+ * - borra líneas existentes para evitar mezcla de modos
+ *
+ * Si no hay monto:
+ * - habilita Add Line
+ * =========================================================
+ */
+function updateAddLineButtonState(specialtyCard) {
+    if (!specialtyCard) return;
+
+    const amountInput = specialtyCard.querySelector(".specialty-amount-input");
+    const addLineButton = specialtyCard.querySelector(".add-line-item-btn");
+    const lineItemsContainer = specialtyCard.querySelector(".line-items-container");
+
+    if (!amountInput || !addLineButton) return;
+
+    const amountValue = Number(amountInput.value || 0);
+    const hasDirectAmount = amountValue > 0;
+
+    if (hasDirectAmount) {
+        addLineButton.disabled = true;
+        addLineButton.classList.add("opacity-40", "pointer-events-none");
+        addLineButton.setAttribute("aria-disabled", "true");
+
+        // Modo exclusivo: si existe amount, las líneas se limpian
+        if (lineItemsContainer) {
+            lineItemsContainer.innerHTML = "";
+        }
+    } else {
+        addLineButton.disabled = false;
+        addLineButton.classList.remove("opacity-40", "pointer-events-none");
+        addLineButton.removeAttribute("aria-disabled");
+    }
+}
+
+
+
+
+function updateLineItemHeaderAmount(lineItemRow) {
+    if (!lineItemRow) return;
+
+    const amountInput = lineItemRow.querySelector(".line-item-amount-input");
+    const amountDisplay = lineItemRow.querySelector(".line-item-amount-display");
+
+    const amount = Number(amountInput?.value || 0);
+
+    if (amountDisplay) {
+        amountDisplay.textContent = `$${amount.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}`;
+    }
 }
