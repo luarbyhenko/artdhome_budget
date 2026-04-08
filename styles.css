@@ -47,3 +47,40 @@ select::-ms-expand {
     box-shadow: none;
     border-color: rgba(255, 255, 255, 0.06);
 }
+
+
+
+
+.specialty-card {
+    transition: padding 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.specialty-card.is-collapsed {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.specialty-card.is-collapsed .specialty-body {
+    display: none;
+}
+
+.specialty-card.is-collapsed .specialty-toggle-btn,
+.specialty-card.is-collapsed .save-specialty-btn,
+.specialty-card.is-collapsed .delete-specialty-btn,
+.specialty-card.is-collapsed .specialty-total-display {
+    display: flex;
+    align-items: center;
+}
+
+.specialty-card.is-collapsed .specialty-name-input {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+
+
+.add-line-item-btn:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: not-allowed;
+}
