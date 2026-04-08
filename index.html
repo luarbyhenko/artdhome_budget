@@ -1,40 +1,26 @@
 <!DOCTYPE html>
 <!--
     Versión responsive de la pantalla original de creación de presupuesto.
-    Alcance de esta revisión:
-    - Mantener el diseño visual, contenido y estructura original lo más intactos posible
-    - Mejorar el comportamiento responsive en móvil, tablet y escritorio
-    - Añadir comportamiento para crear nuevas especialidades con el botón "Add Specialty"
-
-    Importante:
-    - No se añadió lógica de backend
-    - No se cambió el contenido existente
-    - Solo se ajustó la estructura visual del header de las especialidades
-      para que el nombre quede arriba y el subtotal + acciones queden debajo
+    Ajustada con estilo de inputs:
+    - Floating label
+    - Solo línea inferior
+    - Fondo sutil integrado con la paleta del sistema
+    - Manteniendo IDs y clases clave para no romper la lógica existente
 -->
 
 <html class="dark" lang="en">
 <head>
-    <!-- Metadatos básicos del documento -->
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-
-    <!-- Título de la pestaña del navegador -->
     <title>Budget Creation - Art'Dhome ERP</title>
 
-    <!-- TailwindCSS por CDN -->
     <script src="https://cdn.tailwindcss.com?plugins=container-queries"></script>
 
-    <!-- Fuente principal -->
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
-
-    <!-- Iconos Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 
-    <!-- Hoja de estilos externa -->
     <link rel="stylesheet" href="styles.css"/>
 
-    <!-- Configuración de Tailwind -->
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -129,414 +115,569 @@
          BARRA SUPERIOR / HEADER
     ========================================================== -->
     <header class="fixed top-0 left-0 w-full bg-[#0a0d11]/80 backdrop-blur-md dark:bg-[#0a0d11]/80 z-50 border-b border-[#2c383a]/30 shadow-lg shadow-blue-900/10">
-    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-3">
 
-            <!-- BLOQUE IZQUIERDO -->
-            <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 lg:gap-6 min-w-0">
-                <h1 id="budget-id-display" class="text-[#275396] font-black tracking-tight text-sm sm:text-base lg:text-lg uppercase break-words">
-                    Budget ID: Loading...
-                </h1>
-                <p id="budget-mode-badge" class="hidden text-on-surface-variant font-label text-[10px] font-bold uppercase tracking-widest mt-1">
-    Viewing Saved Budget
-</p>
+                <!-- BLOQUE IZQUIERDO -->
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 lg:gap-6 min-w-0">
+                    <h1 id="budget-id-display" class="text-[#275396] font-black tracking-tight text-sm sm:text-base lg:text-lg uppercase break-words">
+                        Budget ID: Loading...
+                    </h1>
+                    <p id="budget-mode-badge" class="hidden text-on-surface-variant font-label text-[10px] font-bold uppercase tracking-widest mt-1">
+                        Viewing Saved Budget
+                    </p>
 
-                <div class="hidden sm:block h-4 w-[1px] bg-outline-variant/30"></div>
+                    <div class="hidden sm:block h-4 w-[1px] bg-outline-variant/30"></div>
 
-                <span id="current-date-display" class="text-on-surface-variant font-label text-xs sm:text-sm font-medium tracking-wide uppercase">
-                    Date: --
-                </span>
+                    <span id="current-date-display" class="text-on-surface-variant font-label text-xs sm:text-sm font-medium tracking-wide uppercase">
+                        Date: --
+                    </span>
+                </div>
+
+                <!-- BLOQUE DERECHO -->
+                <div class="flex flex-col lg:flex-row gap-2 lg:gap-3 w-full lg:w-auto">
+
+                    <button id="view-budgets-btn"
+                        class="w-full lg:w-auto bg-surface-container-low text-on-surface font-label font-bold uppercase tracking-widest text-[11px] px-4 sm:px-6 py-2.5 rounded-lg border border-outline hover:bg-surface-container transition-all active:scale-95">
+                        View Budgets
+                    </button>
+
+                    <button
+                        id="close-readonly-btn"
+                        type="button"
+                        class="hidden w-full lg:w-auto bg-surface-container-low text-on-surface font-label font-bold uppercase tracking-widest text-[11px] px-4 sm:px-6 py-2.5 rounded-lg border border-outline hover:bg-surface-container transition-all active:scale-95"
+                    >
+                        <span class="material-symbols-outlined align-middle text-base mr-1">close</span>
+                        Close
+                    </button>
+
+                    <div class="grid grid-cols-2 gap-2 w-full lg:flex lg:w-auto lg:gap-3">
+                        <button id="save-budget-btn"
+                            class="w-full lg:w-auto bg-surface-container-low text-on-surface font-label font-bold uppercase tracking-widest text-[11px] px-4 sm:px-6 py-2.5 rounded-lg border border-outline hover:bg-surface-container transition-all active:scale-95">
+                            Save
+                        </button>
+
+                        <button
+                            id="approve-budget-btn"
+                            class="w-full lg:w-auto bg-primary text-on-primary font-label font-black uppercase tracking-widest text-[11px] px-4 sm:px-6 py-2.5 rounded-lg shadow-lg shadow-primary/20 hover:brightness-110 transition-all active:scale-95">
+                            Approve
+                        </button>
+                    </div>
+                </div>
             </div>
-
-            <!-- BLOQUE DERECHO -->
-           <div class="flex flex-col lg:flex-row gap-2 lg:gap-3 w-full lg:w-auto">
-
-    <!-- VIEW -->
-    <button id="view-budgets-btn"
-        class="w-full lg:w-auto bg-surface-container-low text-on-surface font-label font-bold uppercase tracking-widest text-[11px] px-4 sm:px-6 py-2.5 rounded-lg border border-outline hover:bg-surface-container transition-all active:scale-95">
-        View Budgets
-    </button>
-
-    <button
-    id="close-readonly-btn"
-    type="button"
-    class="hidden w-full lg:w-auto bg-surface-container-low text-on-surface font-label font-bold uppercase tracking-widest text-[11px] px-4 sm:px-6 py-2.5 rounded-lg border border-outline hover:bg-surface-container transition-all active:scale-95"
->
-    <span class="material-symbols-outlined align-middle text-base mr-1">close</span>
-    Close
-</button>
-
-    <!-- SAVE + APPROVE -->
-    <div class="grid grid-cols-2 gap-2 w-full lg:flex lg:w-auto lg:gap-3">
-        <button id="save-budget-btn"
-            class="w-full lg:w-auto bg-surface-container-low text-on-surface font-label font-bold uppercase tracking-widest text-[11px] px-4 sm:px-6 py-2.5 rounded-lg border border-outline hover:bg-surface-container transition-all active:scale-95">
-            Save
-        </button>
-
-        <button
-            id="approve-budget-btn"
-            class="w-full lg:w-auto bg-primary text-on-primary font-label font-black uppercase tracking-widest text-[11px] px-4 sm:px-6 py-2.5 rounded-lg shadow-lg shadow-primary/20 hover:brightness-110 transition-all active:scale-95">
-            Approve
-        </button>
-
-        
-    </div>
-</div>
         </div>
-    </div>
-</header>
+    </header>
 
     <!-- =========================================================
          LIENZO PRINCIPAL
     ========================================================== -->
     <main class="pt-56 sm:pt-44 md:pt-24 pb-12 px-4 sm:px-8 md:px-8 max-w-[1600px] mx-auto">
-    <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.55fr)_380px] gap-6 xl:gap-8 items-start">
+        <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.55fr)_380px] gap-6 xl:gap-8 items-start">
 
-        <!-- COLUMNA IZQUIERDA -->
-        <div class="space-y-6 lg:space-y-8 min-w-0">
+            <!-- COLUMNA IZQUIERDA -->
+            <div class="space-y-6 lg:space-y-8 min-w-0">
 
-            <!-- Architectural Data -->
-            <section class="bg-surface-container-low rounded-xl p-4 sm:p-6 lg:p-7 shadow-sm">
-                <header class="mb-6 lg:mb-8">
-                    <h2 class="text-on-surface font-black uppercase tracking-[0.1em] text-[11px] mb-1">
-                        Architectural Data
-                    </h2>
-                    <p class="text-on-surface-variant text-sm font-light uppercase tracking-wider">
-                        Project Information Details
-                    </p>
-                </header>
-
-                
-             <div class="space-y-4 md:space-y-6">
-    <!-- Fila 1: Client Name full width -->
-    <div class="space-y-2">
-        <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest ml-1">
-            Client Name
-        </label>
-        <div class="relative">
-            <select id="client-name-input" class="w-full bg-surface-container rounded-lg py-3 px-4 pr-10 text-sm text-on-surface appearance-none bg-no-repeat focus:outline-none focus:border-primary border border-outline transition-all font-medium">
-                <option>Inmobiliaria Los Pinos S.A.</option>
-                <option>Skyline Developments Corp</option>
-                <option>Urban Vision Partners</option>
-            </select>
-            <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
-                expand_more
-            </span>
-        </div>
-    </div>
-
-    <!-- Fila 2: Service + Project -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-        <div class="space-y-2">
-            <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest ml-1">
-                Service / Category
-            </label>
-            <input id="service-category-input" class="w-full bg-surface-container rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary border border-outline placeholder:text-outline-variant font-medium" placeholder="e.g. Interior Renovation" type="text"/>
-        </div>
-
-        <div class="space-y-2">
-            <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest ml-1">
-                Project Name
-            </label>
-            <input id="project-name-input" class="w-full bg-surface-container rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary border border-outline placeholder:text-outline-variant font-medium" placeholder="Industrial Complex Alpha" type="text"/>
-        </div>
-    </div>
-
-    <!-- Fila 3: Location + Total Area -->
-    <div class="grid grid-cols-2 gap-4 md:gap-6">
-        <div class="space-y-2">
-            <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest ml-1">
-                Location
-            </label>
-            <div class="relative">
-                <input
-                    id="location-input"
-                    class="w-full bg-surface-container rounded-lg py-3 px-4 pl-10 text-on-surface focus:outline-none focus:border-primary border border-outline placeholder:text-outline-variant font-medium"
-                    placeholder="Calle Mayor 42, Madrid"
-                    type="text"
-                />
-                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
-                    location_on
-                </span>
-            </div>
-        </div>
-
-        <div class="space-y-2">
-            <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest ml-1">
-                Total Area (SF)
-            </label>
-            <input
-                id="total-area-input"
-                class="w-full bg-surface-container rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary border border-outline placeholder:text-outline-variant font-medium"
-                placeholder="e.g. 4200"
-                type="number"
-                min="0"
-                step="0.01"
-            />
-        </div>
-    </div>
-</div>
-                    
-                
-            </section>
-
-            <!-- Execution Blocks -->
-            <section class="bg-surface-container-low rounded-xl p-4 sm:p-6 lg:p-7 shadow-sm space-y-4">
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-6">
-                    <div>
+                <!-- Architectural Data -->
+                <section class="bg-surface-container-low rounded-xl p-4 sm:p-6 lg:p-7 shadow-sm">
+                    <header class="mb-6 lg:mb-8">
                         <h2 class="text-on-surface font-black uppercase tracking-[0.1em] text-[11px] mb-1">
-                            Execution Blocks
+                            Architectural Data
                         </h2>
                         <p class="text-on-surface-variant text-sm font-light uppercase tracking-wider">
-                            Detailed cost breakdown by specialty
+                            Project Information Details
                         </p>
+                    </header>
+
+                    <div class="space-y-6">
+
+                        <!-- Client Name -->
+                        <div class="relative">
+                            <select
+                                id="client-name-input"
+                                class="peer w-full bg-surface-container-high/30 backdrop-blur-[2px] border-0 border-b border-outline rounded-none pt-7 pb-2 px-2 pr-8 text-[13px] text-on-surface appearance-none focus:outline-none focus:border-primary font-medium leading-none"
+                            >
+                                <option value="" disabled selected hidden></option>
+                                <option>Inmobiliaria Los Pinos S.A.</option>
+                                <option>Skyline Developments Corp</option>
+                                <option>Urban Vision Partners</option>
+                            </select>
+
+                            <label
+                                for="client-name-input"
+                                class="absolute left-2 top-2 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant pointer-events-none"
+                            >
+                                Client Name
+                            </label>
+
+                            <span class="material-symbols-outlined absolute right-1 top-1/2 -translate-y-1/2 text-on-surface-variant text-base pointer-events-none">
+                                expand_more
+                            </span>
+                        </div>
+
+                        <!-- Service + Project -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                            <div class="relative">
+                                <input
+                                    id="service-category-input"
+                                    type="text"
+                                    placeholder=" "
+                                    class="peer w-full bg-surface-container-high/30 backdrop-blur-[2px] border-0 border-b border-outline rounded-none pt-7 pb-2 px-2 text-[13px] text-on-surface focus:outline-none focus:border-primary placeholder:text-transparent font-medium leading-none"
+                                />
+                                <label
+                                    for="service-category-input"
+                                    class="absolute left-2 top-2 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant pointer-events-none"
+                                >
+                                    Service / Category
+                                </label>
+                            </div>
+
+                            <div class="relative">
+                                <input
+                                    id="project-name-input"
+                                    type="text"
+                                    placeholder=" "
+                                    class="peer w-full bg-surface-container-high/30 backdrop-blur-[2px] border-0 border-b border-outline rounded-none pt-7 pb-2 px-2 text-[13px] text-on-surface focus:outline-none focus:border-primary placeholder:text-transparent font-medium leading-none"
+                                />
+                                <label
+                                    for="project-name-input"
+                                    class="absolute left-2 top-2 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant pointer-events-none"
+                                >
+                                    Project Name
+                                </label>
+                            </div>
+
+                        </div>
+
+                        <!-- Location + Total Area -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                            <div class="relative">
+                                <input
+                                    id="location-input"
+                                    type="text"
+                                    placeholder=" "
+                                    class="peer w-full bg-surface-container-high/30 backdrop-blur-[2px] border-0 border-b border-outline rounded-none pt-7 pb-2 pr-2 pl-9 text-[13px] text-on-surface focus:outline-none focus:border-primary placeholder:text-transparent font-medium leading-none"
+                                />
+                                <label
+                                    for="location-input"
+                                    class="absolute left-9 top-2 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant pointer-events-none"
+                                >
+                                    Location
+                                </label>
+
+                                <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
+                                    location_on
+                                </span>
+                            </div>
+
+                            <div class="relative">
+                                <input
+                                    id="total-area-input"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder=" "
+                                    class="peer w-full bg-surface-container-high/30 backdrop-blur-[2px] border-0 border-b border-outline rounded-none pt-7 pb-2 px-2 text-[13px] text-on-surface focus:outline-none focus:border-primary placeholder:text-transparent font-medium leading-none"
+                                />
+                                <label
+                                    for="total-area-input"
+                                    class="absolute left-2 top-2 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant pointer-events-none"
+                                >
+                                    Total Area (SF)
+                                </label>
+                            </div>
+
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Execution Blocks -->
+                <section class="bg-surface-container-low rounded-xl p-4 sm:p-6 lg:p-7 shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-6">
+                        <div>
+                            <h2 class="text-on-surface font-black uppercase tracking-[0.1em] text-[11px] mb-1">
+                                Execution Blocks
+                            </h2>
+                            <p class="text-on-surface-variant text-sm font-light uppercase tracking-wider">
+                                Detailed cost breakdown by specialty
+                            </p>
+                        </div>
+
+                        <button id="add-specialty-btn" class="group flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-[11px] hover:text-on-primary-container transition-colors w-fit" type="button">
+                            <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">add_circle</span>
+                            Add Specialty
+                        </button>
                     </div>
 
-                    <button id="add-specialty-btn" class="group flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-[11px] hover:text-on-primary-container transition-colors w-fit" type="button">
-                        <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">add_circle</span>
-                        Add Specialty
-                    </button>
-                </div>
-
-                <div id="specialties-container" class="space-y-4">
-                    <!-- Las especialidades se agregan dinámicamente -->
-                </div>
-            </section>
-        </div>
-
-        <!-- COLUMNA DERECHA -->
-        <aside class="w-full xl:w-auto space-y-6 xl:sticky xl:top-24 self-start">
-            <div class="relative overflow-hidden bg-primary p-6 sm:p-8 rounded-xl shadow-xl shadow-primary/20">
-                <div class="absolute inset-0 bg-white/5 backdrop-blur-[1px]"></div>
-
-                <div class="absolute top-0 right-0 p-4 opacity-10">
-                    <span class="material-symbols-outlined text-8xl sm:text-9xl">payments</span>
-                </div>
-
-              <div class="relative z-10">
-    <h3 class="text-on-primary font-black uppercase tracking-[0.2em] text-[11px] mb-4 opacity-80">
-        Total Budget
-    </h3>
-
-    <div class="flex items-baseline gap-1 mb-6 flex-wrap">
-        <span class="text-on-primary/60 text-lg sm:text-xl font-light">$</span>
-        <span id="total-budget-amount" class="text-on-primary text-3xl sm:text-4xl font-black tracking-tighter break-all">
-            0.00
-        </span>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4 border-t border-white/10 pt-5">
-        <div class="min-w-0">
-            <p class="text-on-primary/60 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1">
-                Cost / SF
-            </p>
-            <p id="cost-per-sf-display" class="text-on-primary text-sm sm:text-base font-bold tracking-tight">
-                --
-            </p>
-        </div>
-
-        <div class="min-w-0">
-            <p class="text-on-primary/60 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1">
-                Specialties
-            </p>
-            <p id="specialties-count-display" class="text-on-primary text-sm sm:text-base font-bold tracking-tight">
-                0
-            </p>
-        </div>
-    </div>
-</div>  
+                    <div id="specialties-container" class="space-y-4">
+                        <!-- Las especialidades se agregan dinámicamente -->
+                    </div>
+                </section>
             </div>
 
-            <div class="bg-surface-container-low rounded-xl p-5 sm:p-6 border border-outline/10">
-                <h3 class="text-on-surface font-black uppercase tracking-[0.1em] text-[11px] mb-6 border-b border-outline/20 pb-4">
-                    Specialty Breakdown
-                </h3>
+            <!-- COLUMNA DERECHA -->
+            <aside class="w-full xl:w-auto space-y-6 xl:sticky xl:top-24 self-start">
+                <div class="relative overflow-hidden bg-primary p-6 sm:p-8 rounded-xl shadow-xl shadow-primary/20">
+                    <div class="absolute inset-0 bg-white/5 backdrop-blur-[1px]"></div>
 
-                <div id="breakdown-list" class="space-y-5"></div>
+                    <div class="absolute top-0 right-0 p-4 opacity-10">
+                        <span class="material-symbols-outlined text-8xl sm:text-9xl">payments</span>
+                    </div>
 
-               <div class="mt-4 pt-3 border-t border-outline/10">
-    <div class="flex items-center justify-between gap-4">
-        <label for="management-fee-input" class="text-on-surface-variant text-[9px] sm:text-[10px] font-bold uppercase tracking-widest">
-            Administration (%)
-        </label>
+                    <div class="relative z-10">
+                        <h3 class="text-on-primary font-black uppercase tracking-[0.2em] text-[11px] mb-4 opacity-80">
+                            Total Budget
+                        </h3>
 
-        <input
-            id="management-fee-input"
-            class="management-fee-input w-20 sm:w-24 bg-surface-container rounded-lg py-2 px-3 text-sm text-right text-on-surface focus:outline-none focus:border-primary border border-outline font-medium"
-            type="number"
-            min="0"
-            step="0.01"
-            value="10"
-        />
-    </div>
-</div>
-            </div>
+                        <div class="flex items-baseline gap-1 mb-6 flex-wrap">
+                            <span class="text-on-primary/60 text-lg sm:text-xl font-light">$</span>
+                            <span id="total-budget-amount" class="text-on-primary text-3xl sm:text-4xl font-black tracking-tighter break-all">
+                                0.00
+                            </span>
+                        </div>
 
-            <div id="budget-validation-box" class="p-4 bg-surface-bright rounded-xl border border-primary/20 flex gap-4 items-start sm:items-center">
-                <div class="bg-primary/10 p-2 rounded-lg shrink-0">
-                    <span class="material-symbols-outlined text-primary">info</span>
+                        <div class="grid grid-cols-2 gap-4 border-t border-white/10 pt-5">
+                            <div class="min-w-0">
+                                <p class="text-on-primary/60 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1">
+                                    Cost / SF
+                                </p>
+                                <p id="cost-per-sf-display" class="text-on-primary text-sm sm:text-base font-bold tracking-tight">
+                                    --
+                                </p>
+                            </div>
+
+                            <div class="min-w-0">
+                                <p class="text-on-primary/60 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mb-1">
+                                    Specialties
+                                </p>
+                                <p id="specialties-count-display" class="text-on-primary text-sm sm:text-base font-bold tracking-tight">
+                                    0
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-on-surface font-bold text-[10px] uppercase tracking-widest">
-                        Budget Validation
-                    </p>
-                    <p class="text-on-surface-variant text-[9px] leading-relaxed">
-                        Prices are locked for 30 days based on current material index.
-                    </p>
+
+                <div class="bg-surface-container-low rounded-xl p-5 sm:p-6 border border-outline/10">
+                    <h3 class="text-on-surface font-black uppercase tracking-[0.1em] text-[11px] mb-6 border-b border-outline/20 pb-4">
+                        Specialty Breakdown
+                    </h3>
+
+                    <div id="breakdown-list" class="space-y-5"></div>
+
+                    <div class="mt-4 pt-3 border-t border-outline/10">
+                        <div class="relative">
+                            <input
+                                id="management-fee-input"
+                                class="management-fee-input peer w-full bg-surface-container-high/30 backdrop-blur-[2px] border-0 border-b border-outline rounded-none pt-7 pb-2 px-2 text-[13px] text-right text-on-surface focus:outline-none focus:border-primary font-medium placeholder:text-transparent leading-none"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value="10"
+                                placeholder=" "
+                            />
+                            <label
+                                for="management-fee-input"
+                                class="absolute left-2 top-2 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant pointer-events-none"
+                            >
+                                Administration (%)
+                            </label>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </aside>
-    </div>
-</main>
+
+                <div id="budget-validation-box" class="p-4 bg-surface-bright rounded-xl border border-primary/20 flex gap-4 items-start sm:items-center">
+                    <div class="bg-primary/10 p-2 rounded-lg shrink-0">
+                        <span class="material-symbols-outlined text-primary">info</span>
+                    </div>
+                    <div>
+                        <p class="text-on-surface font-bold text-[10px] uppercase tracking-widest">
+                            Budget Validation
+                        </p>
+                        <p class="text-on-surface-variant text-[9px] leading-relaxed">
+                            Prices are locked for 30 days based on current material index.
+                        </p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
 
     <!-- =========================================================
-         PLANTILLA DE NUEVA ESPECIALIDAD
+         SPECIALTY TEMPLATE
     ========================================================== -->
     <template id="specialty-template">
-    <div class="specialty-card bg-surface-container-low rounded-xl overflow-hidden border border-outline/20">
+        <div class="specialty-card bg-surface-container/40 border border-outline/10 px-4 py-3 space-y-4 relative overflow-hidden">
 
-        <!-- Header -->
-        <div class="px-4 sm:px-6 py-4 bg-surface-bright/30 space-y-4">
+            <!-- LEFT VISUAL LINE -->
+            <div class="absolute left-0 top-0 h-full w-[3px] bg-primary"></div>
 
-            <!-- Fila 1: título -->
-            <div class="flex items-center gap-3 min-w-0">
-                <span class="material-symbols-outlined text-on-surface-variant cursor-pointer shrink-0">expand_less</span>
-                <input
-                    class="bg-transparent border-none text-on-surface font-bold uppercase tracking-widest text-sm w-full focus:outline-none p-0 min-w-0"
-                    type="text"
-                    value="New Specialty"
-                />
-            </div>
+            <!-- HEADER -->
+            <div class="flex justify-between items-center gap-3 pl-2 min-h-[40px]">
 
-            <!-- Fila 2: subtotal + acciones -->
-            <div class="flex items-center justify-between gap-4">
-                <div class="text-left min-w-0">
-                    <span class="block text-[9px] font-black text-on-surface-variant uppercase tracking-widest">
-                        Current Subtotal
-                    </span>
-                    <span class="specialty-subtotal text-primary font-bold tracking-tight text-base">$0.00</span>
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <button type="button" class="specialty-toggle-btn w-8 h-8 flex items-center justify-center rounded-md hover:bg-white/5 shrink-0">
+                        <span class="material-symbols-outlined text-[20px] text-on-surface-variant">expand_less</span>
+                    </button>
+
+                    <div class="relative flex-1 min-w-0">
+                        <input
+                            type="text"
+                            placeholder=" "
+                            class="specialty-name-input peer w-full bg-surface-container-high/30 backdrop-blur-[2px] border-0 border-b border-outline rounded-none pt-7 pb-2 px-2 text-[13px] text-on-surface font-bold uppercase tracking-[0.08em] focus:outline-none focus:border-primary placeholder:text-transparent leading-none"
+                        />
+                        <label
+                            class="absolute left-2 top-2 text-[9px] text-on-surface-variant uppercase tracking-widest font-bold pointer-events-none"
+                        >
+                            Specialty
+                        </label>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-2 shrink-0">
-                    <button
-                        class="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
-                        type="button"
-                        aria-label="Guardar especialidad"
-                    >
-                        <span class="material-symbols-outlined text-xl">save</span>
+                    <span class="text-[10px] text-on-surface-variant uppercase tracking-widest">
+                        Subtotal
+                    </span>
+                    <span class="specialty-total-display text-primary font-black text-base tracking-tight">
+                        $0.00
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-1 shrink-0">
+                    <button class="save-specialty-btn w-8 h-8 flex items-center justify-center rounded-md hover:bg-primary/10 text-primary">
+                        <span class="material-symbols-outlined text-[20px]">save</span>
                     </button>
 
-                    <button
-                        class="delete-specialty-btn p-2 hover:bg-error/10 text-error rounded-lg transition-colors"
-                        type="button"
-                        aria-label="Eliminar especialidad"
-                    >
-                        <span class="material-symbols-outlined text-xl">delete</span>
+                    <button class="delete-specialty-btn w-8 h-8 flex items-center justify-center rounded-md hover:bg-error/10 text-error">
+                        <span class="material-symbols-outlined text-[20px]">delete</span>
                     </button>
                 </div>
+
+            </div>
+
+            <!-- BODY -->
+            <div class="specialty-body space-y-4 pl-2">
+
+                <!-- AMOUNT -->
+                <div class="relative">
+                    <input
+                        type="number"
+                        placeholder=" "
+                        class="specialty-amount-input peer w-full bg-surface-container-high/30 backdrop-blur-[2px] border-0 border-b border-outline rounded-none pt-7 pb-2 px-2 text-[13px] text-on-surface focus:outline-none focus:border-primary placeholder:text-transparent leading-none"
+                    />
+                    <label
+                        class="absolute left-2 top-2 text-[9px] text-on-surface-variant uppercase tracking-widest font-bold pointer-events-none"
+                    >
+                        Amount
+                    </label>
+                </div>
+
+                <!-- LINES ACTION -->
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <p class="text-on-surface font-black uppercase tracking-[0.08em] text-[10px]">
+                            Line Items
+                        </p>
+                        <p class="text-on-surface-variant text-xs uppercase tracking-wider">
+                            Add detailed lines instead of a direct amount
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="add-line-item-btn text-primary font-bold text-[11px] uppercase tracking-widest flex items-center gap-2"
+                    >
+                        <span class="material-symbols-outlined text-lg">add_circle</span>
+                        Add Line
+                    </button>
+                </div>
+
+                <!-- LINE ITEMS -->
+                <div class="line-items-container space-y-2"></div>
+
             </div>
         </div>
+    </template>
 
-        <!-- Body -->
-        <div class="specialty-body p-4 sm:p-6 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div class="space-y-2">
-                <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest">
-                    Labor (USD)
-                </label>
-                <input
-                    class="w-full bg-surface-container rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary border border-outline font-mono text-sm"
-                    type="number"
-                    value="0"
-                />
+    <template id="line-item-template">
+    <div class="line-item-row bg-surface-container/30 border border-outline/10 px-4 py-3 space-y-3 relative overflow-hidden">
+
+        <!-- LEFT VISUAL LINE -->
+        <div class="absolute left-0 top-0 h-full w-[2px] bg-primary/40"></div>
+
+        <!-- HEADER -->
+        <div class="line-item-header flex justify-between items-center gap-3 pl-2 min-h-[40px]">
+
+            <!-- LEFT -->
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+                <button
+                    type="button"
+                    class="line-item-toggle-btn w-8 h-8 flex items-center justify-center rounded-md hover:bg-white/5 shrink-0"
+                >
+                    <span class="material-symbols-outlined text-[20px] text-on-surface-variant">expand_less</span>
+                </button>
+
+                <div class="relative flex-1 min-w-0">
+                    <input
+                        type="text"
+                        placeholder=" "
+                        class="line-item-description-input peer w-full bg-surface-container-high/30 backdrop-blur-[2px] border-0 border-b border-outline rounded-none pt-7 pb-2 px-2 text-[13px] text-on-surface font-medium tracking-[0.02em] focus:outline-none focus:border-primary placeholder:text-transparent leading-none"
+                    />
+                    <label
+                        class="absolute left-2 top-2 text-[9px] text-on-surface-variant uppercase tracking-widest font-bold pointer-events-none"
+                    >
+                        Description
+                    </label>
+                </div>
             </div>
 
-            <div class="space-y-2">
-                <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest">
-                    Materials (USD)
-                </label>
-                <input
-                    class="w-full bg-surface-container rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary border border-outline font-mono text-sm"
-                    type="number"
-                    value="0"
-                />
+            <!-- CENTER -->
+            <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[10px] text-on-surface-variant uppercase tracking-widest">
+                    Amount
+                </span>
+                <span class="line-item-amount-display text-primary font-black text-base tracking-tight leading-none">
+                    $0.00
+                </span>
             </div>
 
-            <div class="space-y-2">
-                <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest">
-                    Equipment (USD)
-                </label>
-                <input
-                    class="w-full bg-surface-container rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary border border-outline font-mono text-sm"
-                    type="number"
-                    value="0"
-                />
+            <!-- RIGHT -->
+            <div class="flex items-center gap-1 shrink-0">
+                <button
+                    type="button"
+                    class="save-line-item-btn w-8 h-8 flex items-center justify-center rounded-md hover:bg-primary/10 text-primary"
+                >
+                    <span class="material-symbols-outlined text-[20px]">save</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="delete-line-item-btn w-8 h-8 flex items-center justify-center rounded-md hover:bg-error/10 text-error"
+                >
+                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                </button>
             </div>
 
-            <div class="space-y-2">
-                <label class="block text-on-surface-variant text-[9px] font-bold uppercase tracking-widest">
-                    Others (USD)
-                </label>
-                <input
-                    class="w-full bg-surface-container rounded-lg py-3 px-4 text-on-surface focus:outline-none focus:border-primary border border-outline font-mono text-sm"
-                    type="number"
-                    value="0"
-                />
+        </div>
+
+        <!-- BODY -->
+        <div class="line-item-body pl-2">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+                <div class="relative">
+                    <input
+                        type="number"
+                        placeholder=" "
+                        class="line-item-qty-input peer w-full bg-surface-container-high/30 backdrop-blur-[2px] border-0 border-b border-outline rounded-none pt-7 pb-2 px-2 text-[13px] text-on-surface focus:outline-none focus:border-primary placeholder:text-transparent leading-none"
+                    />
+                    <label
+                        class="absolute left-2 top-2 text-[9px] text-on-surface-variant uppercase tracking-widest font-bold pointer-events-none"
+                    >
+                        Qty
+                    </label>
+                </div>
+
+                <div class="relative">
+                    <input
+                        type="text"
+                        placeholder=" "
+                        class="line-item-unit-input peer w-full bg-surface-container-high/30 backdrop-blur-[2px] border-0 border-b border-outline rounded-none pt-7 pb-2 px-2 text-[13px] text-on-surface focus:outline-none focus:border-primary placeholder:text-transparent leading-none"
+                    />
+                    <label
+                        class="absolute left-2 top-2 text-[9px] text-on-surface-variant uppercase tracking-widest font-bold pointer-events-none"
+                    >
+                        Unit
+                    </label>
+                </div>
+
+                <div class="relative">
+                    <input
+                        type="number"
+                        placeholder=" "
+                        class="line-item-unit-cost-input peer w-full bg-surface-container-high/30 backdrop-blur-[2px] border-0 border-b border-outline rounded-none pt-7 pb-2 px-2 text-[13px] text-on-surface focus:outline-none focus:border-primary placeholder:text-transparent leading-none"
+                    />
+                    <label
+                        class="absolute left-2 top-2 text-[9px] text-on-surface-variant uppercase tracking-widest font-bold pointer-events-none"
+                    >
+                        Unit Cost
+                    </label>
+                </div>
+
+                <div class="relative">
+                    <input
+                        type="number"
+                        placeholder=" "
+                        class="line-item-amount-input peer w-full bg-surface-container-high/30 backdrop-blur-[2px] border-0 border-b border-outline rounded-none pt-7 pb-2 px-2 text-[13px] text-primary font-semibold focus:outline-none focus:border-primary placeholder:text-transparent leading-none"
+                    />
+                    <label
+                        class="absolute left-2 top-2 text-[9px] text-on-surface-variant uppercase tracking-widest font-bold pointer-events-none"
+                    >
+                        Amount
+                    </label>
+                </div>
+
             </div>
         </div>
     </div>
 </template>
 
     <!-- =========================================================
-     SAVED BUDGETS DRAWER
-========================================================== -->
-<div id="budgets-drawer-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-[60] hidden opacity-0 transition-opacity duration-300"></div>
+         SAVED BUDGETS DRAWER
+    ========================================================== -->
+    <div id="budgets-drawer-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-[60] hidden opacity-0 transition-opacity duration-300"></div>
 
-<aside id="budgets-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[440px] lg:w-[520px] bg-surface-container-low border-l border-outline/20 shadow-2xl z-[70] translate-x-full transition-transform duration-300 flex flex-col">
-    <!-- Header -->
-    <div class="px-5 sm:px-6 py-5 border-b border-outline/20 flex items-center justify-between gap-4">
-        <div>
-            <h2 class="text-on-surface font-black uppercase tracking-[0.12em] text-[11px] mb-1">
-                Saved Budgets
-            </h2>
-            <p class="text-on-surface-variant text-sm font-light uppercase tracking-wider">
-                Search and edit saved estimates
-            </p>
+    <aside id="budgets-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[440px] lg:w-[520px] bg-surface-container-low border-l border-outline/20 shadow-2xl z-[70] translate-x-full transition-transform duration-300 flex flex-col">
+        <!-- Header -->
+        <div class="px-5 sm:px-6 py-5 border-b border-outline/20 flex items-center justify-between gap-4">
+            <div>
+                <h2 class="text-on-surface font-black uppercase tracking-[0.12em] text-[11px] mb-1">
+                    Saved Budgets
+                </h2>
+                <p class="text-on-surface-variant text-sm font-light uppercase tracking-wider">
+                    Search and edit saved estimates
+                </p>
+            </div>
+
+            <button id="close-budgets-drawer-btn" type="button" class="p-2 rounded-lg hover:bg-white/5 transition-colors">
+                <span class="material-symbols-outlined text-on-surface-variant">close</span>
+            </button>
         </div>
 
-        <button id="close-budgets-drawer-btn" type="button" class="p-2 rounded-lg hover:bg-white/5 transition-colors">
-            <span class="material-symbols-outlined text-on-surface-variant">close</span>
-        </button>
-    </div>
-
-    <!-- Search -->
-    <div class="p-5 sm:p-6 border-b border-outline/20">
-        <div class="relative">
-            <input
-                id="budgets-search-input"
-                type="text"
-                placeholder="Search by Budget ID, Project or Client"
-                class="w-full bg-surface-container rounded-lg py-3 px-4 pl-10 text-on-surface focus:outline-none focus:border-primary border border-outline placeholder:text-outline-variant font-medium"
-            />
-            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
-                search
-            </span>
+        <!-- Search -->
+        <div class="p-5 sm:p-6 border-b border-outline/20">
+            <div class="relative">
+                <input
+                    id="budgets-search-input"
+                    type="text"
+                    placeholder=" "
+                    class="peer w-full bg-surface-container-high/30 backdrop-blur-[2px] border-0 border-b border-outline rounded-none pt-7 pb-2 pr-2 pl-9 text-[13px] text-on-surface focus:outline-none focus:border-primary placeholder:text-transparent font-medium leading-none"
+                />
+                <label
+                    for="budgets-search-input"
+                    class="absolute left-9 top-2 text-[9px] font-bold uppercase tracking-widest text-on-surface-variant pointer-events-none"
+                >
+                    Search by Budget ID, Project or Client
+                </label>
+                <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">
+                    search
+                </span>
+            </div>
         </div>
-    </div>
 
-    <!-- Results -->
-    <div id="budgets-drawer-list" class="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
-        <div class="rounded-xl border border-dashed border-outline/30 bg-surface-container p-5 text-center">
-            <p class="text-on-surface font-bold text-[10px] uppercase tracking-widest mb-2">
-                No budgets loaded yet
-            </p>
-            <p class="text-on-surface-variant text-xs leading-relaxed">
-                Saved budgets will appear here once we connect this panel to your database.
-            </p>
+        <!-- Results -->
+        <div id="budgets-drawer-list" class="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+            <div class="rounded-xl border border-dashed border-outline/30 bg-surface-container p-5 text-center">
+                <p class="text-on-surface font-bold text-[10px] uppercase tracking-widest mb-2">
+                    No budgets loaded yet
+                </p>
+                <p class="text-on-surface-variant text-xs leading-relaxed">
+                    Saved budgets will appear here once we connect this panel to your database.
+                </p>
+            </div>
         </div>
-    </div>
-</aside>
+    </aside>
 
-    <!-- Script externo -->
     <script src="script.js"></script>
 </body>
 </html>
